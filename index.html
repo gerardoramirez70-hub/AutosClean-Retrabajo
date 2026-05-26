@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutosClean&Go - Diagrama de Retrabajo</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f6fa;
+      margin: 0;
+      color: #222;
+    }
+
+    header {
+      background: #0b5ed7;
+      color: white;
+      text-align: center;
+      padding: 25px;
+    }
+
+    .container {
+      width: 92%;
+      max-width: 1200px;
+      margin: 25px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 14px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.12);
+    }
+
+    h2 {
+      color: #0b5ed7;
+      border-bottom: 2px solid #0b5ed7;
+      padding-bottom: 8px;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 15px;
+    }
+
+    input, textarea, select, button {
+      width: 100%;
+      padding: 11px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid #bbb;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #0b5ed7;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #084298;
+    }
+
+    .btn-red {
+      background: #dc3545;
+    }
+
+    .btn-red:hover {
+      background: #a71d2a;
+    }
+
+    .diagram-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 60px;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
+
+    .flow-column, .rework-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .start-end {
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      border: 4px solid #333;
+      background: white;
+      margin: 10px 0;
+    }
+
+    .step {
+      background: #e8f1ff;
+      border: 3px solid #0b5ed7;
+      border-radius: 12px;
+      padding: 15px 25px;
+      margin: 8px 0;
+      min-width: 190px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .active-step {
+      background: #198754;
+      color: white;
+      border-color: #146c43;
+      transform: scale(1.05);
+    }
+
+    .error-step {
+      background: #dc3545;
+      color: white;
+      border-color: #a71d2a;
+    }
+
+    .arrow-down {
+      font-size: 28px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .rework-box {
+      border: 4px solid #ff7b00;
+      border-radius: 18px;
+      padding: 20px;
+      min-width: 280px;
+      background: #fff3e0;
+      display: none;
+    }
+
+    .rework-box.visible {
+      display: block;
+    }
+
+    .rework-title {
+      background: #ff7b00;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      border-radius: 10px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .rework-step {
+      background: white;
+      border: 2px solid #ff7b00;
+      border-radius: 10px;
+      padding: 12px;
+      margin: 10px 0;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .message {
+      background: #111;
+      color: #00ff88;
+      padding: 18px;
+      border-radius: 12px;
+      font-family: Consolas, monospace;
+      white-space: pre-wrap;
+      margin-top: 15px;
+      min-height: 80px;
+    }
+
+    .reason-card {
+      background: #eef5ff;
+      border-left: 6px solid #0b5ed7;
+      padding: 15px;
+      margin-top: 12px;
+      border-radius: 10px;
+    }
+
+    .small {
+      color: #555;
+      font-size: 14px;
+    }
+
+    .return-arrow {
+      font-size: 18px;
+      font-weight: bold;
+      color: #198754;
+      text-align: center;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>AutosClean&Go</h1>
+    <p>Generador de flujos de retrabajo para lavado de autos</p>
+  </header>
+
+  <div class="container">
+    <h2>Simular problema en el flujo</h2>
+
+    <p class="small">
+      Escribe una razón de error. Si la razón existe, el sistema cambia al flujo de retrabajo correspondiente.
+    </p>
+
+    <label>Razón detectada en el proceso</label>
+    <input type="text" id="reasonInput" placeholder="Ejemplo: Manchas visibles">
+
+    <button onclick="simulateReason()">Enviar a retrabajo</button>
+    <button class="btn-red" onclick="resetDiagram()">Reiniciar flujo</button>
+  </div>
+
+  <div class="container">
+    <h2>Diagrama de flujo</h2>
+
+    <div class="diagram-wrapper">
+      <div class="flow-column">
+        <div class="start-end"></div>
+        <div class="arrow-down">↓</div>
+
+        <div class="step" id="step-0">Recibir Auto</div>
+        <div class="arrow-down">↓</div>
+
+        <div class="step" id="step-1">Lavar Exterior</div>
+        <div class="arrow-down">↓</div>
+
+        <div class="step" id="step-2">Limpiar Interior</div>
+        <div class="arrow-down">↓</div>
+
+        <div class="step" id="step-3">Secar Auto</div>
+        <div class="arrow-down">↓</div>
+
+        <div class="step" id="step-4">Revisión Final</div>
+        <div class="arrow-down">↓</div>
+
+        <div class="step" id="step-5">Entregar Auto</div>
+        <div class="arrow-down">↓</div>
+        <div class="start-end"></div>
+      </div>
+
+      <div class="rework-column">
+        <div class="rework-box" id="reworkBox">
+          <div class="rework-title" id="reworkTitle">Retrabajo</div>
+          <div id="reworkSteps"></div>
+          <div class="return-arrow" id="returnText"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Agregar nueva razón de retrabajo</h2>
+
+    <p class="small">
+      Aquí puedes añadir N razones nuevas. Cada razón tendrá su propio flujo de retrabajo.
+    </p>
+
+    <label>Nueva razón</label>
+    <input type="text" id="newReason" placeholder="Ejemplo: Vidrios sucios">
+
+    <label>Nombre del flujo de retrabajo</label>
+    <input type="text" id="newReworkName" placeholder="Ejemplo: Limpieza de Vidrios">
+
+    <label>Pasos para corregir el error</label>
+    <textarea id="newReworkSteps" rows="4" placeholder="Escribe un paso por línea:
+Aplicar limpiavidrios
+Secar con microfibra
+Revisar visibilidad"></textarea>
+
+    <label>Paso del flujo principal al que regresa</label>
+    <select id="newReturnStep">
+      <option>Recibir Auto</option>
+      <option>Lavar Exterior</option>
+      <option>Limpiar Interior</option>
+      <option>Secar Auto</option>
+      <option>Revisión Final</option>
+      <option>Entregar Auto</option>
+    </select>
+
+    <button onclick="addNewReason()">Agregar razón</button>
+  </div>
+
+  <div class="container">
+    <h2>Razones disponibles</h2>
+    <div id="reasonList"></div>
+  </div>
+
+  <div class="container">
+    <h2>Resultado generado</h2>
+    <div class="message" id="outputMessage">
+      Escribe una razón para iniciar la simulación.
+    </div>
+  </div>
+
+  <script>
+    const mainSteps = [
+      "Recibir Auto",
+      "Lavar Exterior",
+      "Limpiar Interior",
+      "Secar Auto",
+      "Revisión Final",
+      "Entregar Auto"
+    ];
+
+    let reworks = [
+      {
+        reason: "Manchas visibles",
+        reworkName: "Relavado Exterior",
+        steps: [
+          "Aplicar espuma nuevamente",
+          "Tallar zonas manchadas",
+          "Enjuagar exterior"
+        ],
+        returnStep: "Secar Auto",
+        errorStep: "Revisión Final"
+      },
+      {
+        reason: "Interior sucio",
+        reworkName: "Limpieza Interior Extra",
+        steps: [
+          "Aspirar asientos",
+          "Limpiar tablero",
+          "Revisar tapetes"
+        ],
+        returnStep: "Revisión Final",
+        errorStep: "Revisión Final"
+      },
+      {
+        reason: "Marcas de agua",
+        reworkName: "Corrección de Secado",
+        steps: [
+          "Pasar microfibra seca",
+          "Secar bordes y espejos",
+          "Revisar brillo exterior"
+        ],
+        returnStep: "Revisión Final",
+        errorStep: "Revisión Final"
+      }
+    ];
+
+    function normalizeText(text) {
+      return text.toLowerCase().trim();
+    }
+
+    function resetDiagram() {
+      document.querySelectorAll(".step").forEach(step => {
+        step.classList.remove("active-step");
+        step.classList.remove("error-step");
+      });
+
+      document.getElementById("reworkBox").classList.remove("visible");
+      document.getElementById("reworkTitle").textContent = "Retrabajo";
+      document.getElementById("reworkSteps").innerHTML = "";
+      document.getElementById("returnText").textContent = "";
+
+      document.getElementById("outputMessage").textContent =
+        "Escribe una razón para iniciar la simulación.";
+    }
+
+    function simulateReason() {
+      resetDiagram();
+
+      const inputReason = document.getElementById("reasonInput").value;
+
+      if (inputReason.trim() === "") {
+        alert("Escribe una razón antes de simular.");
+        return;
+      }
+
+      const foundRework = reworks.find(item =>
+        normalizeText(item.reason) === normalizeText(inputReason)
+      );
+
+      if (!foundRework) {
+        document.getElementById("outputMessage").textContent =
+          "La razón '" + inputReason + "' no existe.\nAgrega esa razón en el apartado de nuevas razones de retrabajo.";
+        return;
+      }
+
+      const errorStepIndex = mainSteps.indexOf(foundRework.errorStep);
+      const returnStepIndex = mainSteps.indexOf(foundRework.returnStep);
+
+      if (errorStepIndex >= 0) {
+        document.getElementById("step-" + errorStepIndex).classList.add("error-step");
+      }
+
+      if (returnStepIndex >= 0) {
+        document.getElementById("step-" + returnStepIndex).classList.add("active-step");
+      }
+
+      document.getElementById("reworkBox").classList.add("visible");
+      document.getElementById("reworkTitle").textContent = foundRework.reworkName;
+
+      let stepsHTML = "";
+      foundRework.steps.forEach((step, index) => {
+        stepsHTML += `<div class="rework-step">${index + 1}. ${step}</div>`;
+      });
+
+      document.getElementById("reworkSteps").innerHTML = stepsHTML;
+
+      document.getElementById("returnText").textContent =
+        "Después del retrabajo regresa a: " + foundRework.returnStep;
+
+      const firstStep = foundRework.steps[0];
+
+      document.getElementById("outputMessage").textContent =
+        "Razón detectada: " + foundRework.reason + "\n\n" +
+        "El auto cambia al flujo de retrabajo:\n" +
+        foundRework.reworkName + "\n\n" +
+        "Pasos para corregir el error:\n" +
+        foundRework.steps.map((step, index) => (index + 1) + ". " + step).join("\n") + "\n\n" +
+        "Cuando termina el retrabajo, regresa a:\n" +
+        foundRework.returnStep + "\n\n" +
+        "Formato generado:\n" +
+        "GoToFlowPath[" + foundRework.reworkName + "/" + firstStep + "] " +
+        "ReturnStep[" + foundRework.returnStep + "] " +
+        "Reason[" + foundRework.reason + "];";
+    }
+
+    function addNewReason() {
+      const reason = document.getElementById("newReason").value.trim();
+      const reworkName = document.getElementById("newReworkName").value.trim();
+      const stepsText = document.getElementById("newReworkSteps").value.trim();
+      const returnStep = document.getElementById("newReturnStep").value;
+
+      if (reason === "" || reworkName === "" || stepsText === "") {
+        alert("Completa todos los campos para agregar la razón.");
+        return;
+      }
+
+      const steps = stepsText
+        .split("\n")
+        .map(step => step.trim())
+        .filter(step => step !== "");
+
+      if (steps.length === 0) {
+        alert("Agrega al menos un paso de retrabajo.");
+        return;
+      }
+
+      const exists = reworks.some(item =>
+        normalizeText(item.reason) === normalizeText(reason)
+      );
+
+      if (exists) {
+        alert("Esa razón ya existe.");
+        return;
+      }
+
+      reworks.push({
+        reason: reason,
+        reworkName: reworkName,
+        steps: steps,
+        returnStep: returnStep,
+        errorStep: "Revisión Final"
+      });
+
+      document.getElementById("newReason").value = "";
+      document.getElementById("newReworkName").value = "";
+      document.getElementById("newReworkSteps").value = "";
+
+      renderReasonList();
+
+      alert("Razón agregada correctamente. Ahora puedes escribirla arriba para probar el flujo.");
+    }
+
+    function renderReasonList() {
+      const reasonList = document.getElementById("reasonList");
+      reasonList.innerHTML = "";
+
+      reworks.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "reason-card";
+
+        card.innerHTML = `
+          <strong>${index + 1}. Razón:</strong> ${item.reason}<br>
+          <strong>Flujo de retrabajo:</strong> ${item.reworkName}<br>
+          <strong>Pasos:</strong> ${item.steps.join(" → ")}<br>
+          <strong>Regresa a:</strong> ${item.returnStep}
+        `;
+
+        reasonList.appendChild(card);
+      });
+    }
+
+    renderReasonList();
+  </script>
+</body>
+</html>
