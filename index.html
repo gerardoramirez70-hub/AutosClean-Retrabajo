@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AutosClean&Go - Diagrama de Retrabajo</title>
+  <title>AutosClean&Go - Generador de Retrabajos</title>
 
   <style>
     body {
@@ -130,7 +130,7 @@
       border: 4px solid #ff7b00;
       border-radius: 18px;
       padding: 20px;
-      min-width: 280px;
+      min-width: 300px;
       background: #fff3e0;
       display: none;
     }
@@ -168,6 +168,7 @@
       white-space: pre-wrap;
       margin-top: 15px;
       min-height: 80px;
+      overflow-x: auto;
     }
 
     .reason-card {
@@ -189,6 +190,16 @@
       color: #198754;
       text-align: center;
       margin-top: 12px;
+    }
+
+    .output-step {
+      color: #ffffff;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    .output-block {
+      margin-bottom: 18px;
     }
   </style>
 </head>
@@ -259,7 +270,17 @@
     </p>
 
     <label>Nueva razón</label>
-    <input type="text" id="newReason" placeholder="Ejemplo: Vidrios sucios">
+    <input type="text" id="newReason" placeholder="Ejemplo: Vidrios mal limpiados">
+
+    <label>Paso del flujo principal donde se detecta el error</label>
+    <select id="newErrorStep">
+      <option>Recibir Auto</option>
+      <option>Lavar Exterior</option>
+      <option>Limpiar Interior</option>
+      <option>Secar Auto</option>
+      <option>Revisión Final</option>
+      <option>Entregar Auto</option>
+    </select>
 
     <label>Nombre del flujo de retrabajo</label>
     <input type="text" id="newReworkName" placeholder="Ejemplo: Limpieza de Vidrios">
@@ -289,10 +310,22 @@ Revisar visibilidad"></textarea>
   </div>
 
   <div class="container">
-    <h2>Resultado generado</h2>
+    <h2>Resultado de la simulación</h2>
     <div class="message" id="outputMessage">
       Escribe una razón para iniciar la simulación.
     </div>
+  </div>
+
+  <div class="container">
+    <h2>Output string con retrabajos por cada paso del flujo principal</h2>
+
+    <p class="small">
+      Esta sección genera el texto solicitado por el profesor. Cada paso del flujo principal muestra sus retrabajos asociados.
+    </p>
+
+    <div class="message" id="fullOutput"></div>
+
+    <button onclick="copyFullOutput()">Copiar output completo</button>
   </div>
 
   <script>
@@ -308,36 +341,47 @@ Revisar visibilidad"></textarea>
     let reworks = [
       {
         reason: "Manchas visibles",
+        errorStep: "Revisión Final",
         reworkName: "Relavado Exterior",
         steps: [
           "Aplicar espuma nuevamente",
           "Tallar zonas manchadas",
           "Enjuagar exterior"
         ],
-        returnStep: "Secar Auto",
-        errorStep: "Revisión Final"
+        returnStep: "Secar Auto"
       },
       {
         reason: "Interior sucio",
+        errorStep: "Revisión Final",
         reworkName: "Limpieza Interior Extra",
         steps: [
           "Aspirar asientos",
           "Limpiar tablero",
           "Revisar tapetes"
         ],
-        returnStep: "Revisión Final",
-        errorStep: "Revisión Final"
+        returnStep: "Revisión Final"
       },
       {
         reason: "Marcas de agua",
+        errorStep: "Secar Auto",
         reworkName: "Corrección de Secado",
         steps: [
           "Pasar microfibra seca",
           "Secar bordes y espejos",
           "Revisar brillo exterior"
         ],
-        returnStep: "Revisión Final",
-        errorStep: "Revisión Final"
+        returnStep: "Revisión Final"
+      },
+      {
+        reason: "Vidrios mal limpiados",
+        errorStep: "Revisión Final",
+        reworkName: "Limpieza de Vidrios",
+        steps: [
+          "Aplicar limpiavidrios",
+          "Secar con microfibra",
+          "Revisar visibilidad"
+        ],
+        returnStep: "Entregar Auto"
       }
     ];
 
@@ -395,6 +439,7 @@ Revisar visibilidad"></textarea>
       document.getElementById("reworkTitle").textContent = foundRework.reworkName;
 
       let stepsHTML = "";
+
       foundRework.steps.forEach((step, index) => {
         stepsHTML += `<div class="rework-step">${index + 1}. ${step}</div>`;
       });
@@ -408,6 +453,8 @@ Revisar visibilidad"></textarea>
 
       document.getElementById("outputMessage").textContent =
         "Razón detectada: " + foundRework.reason + "\n\n" +
+        "Paso donde se detecta el error:\n" +
+        foundRework.errorStep + "\n\n" +
         "El auto cambia al flujo de retrabajo:\n" +
         foundRework.reworkName + "\n\n" +
         "Pasos para corregir el error:\n" +
@@ -415,13 +462,14 @@ Revisar visibilidad"></textarea>
         "Cuando termina el retrabajo, regresa a:\n" +
         foundRework.returnStep + "\n\n" +
         "Formato generado:\n" +
-        "GoToFlowPath[" + foundRework.reworkName + "/" + firstStep + "] " +
-        "ReturnStep[" + foundRework.returnStep + "] " +
+        "GoToFlowPath[" + foundRework.reworkName + "/" + firstStep + "]\n" +
+        "ReturnStep[" + foundRework.returnStep + "]\n" +
         "Reason[" + foundRework.reason + "];";
     }
 
     function addNewReason() {
       const reason = document.getElementById("newReason").value.trim();
+      const errorStep = document.getElementById("newErrorStep").value;
       const reworkName = document.getElementById("newReworkName").value.trim();
       const stepsText = document.getElementById("newReworkSteps").value.trim();
       const returnStep = document.getElementById("newReturnStep").value;
@@ -452,10 +500,10 @@ Revisar visibilidad"></textarea>
 
       reworks.push({
         reason: reason,
+        errorStep: errorStep,
         reworkName: reworkName,
         steps: steps,
-        returnStep: returnStep,
-        errorStep: "Revisión Final"
+        returnStep: returnStep
       });
 
       document.getElementById("newReason").value = "";
@@ -463,6 +511,7 @@ Revisar visibilidad"></textarea>
       document.getElementById("newReworkSteps").value = "";
 
       renderReasonList();
+      generateFullOutput();
 
       alert("Razón agregada correctamente. Ahora puedes escribirla arriba para probar el flujo.");
     }
@@ -477,6 +526,7 @@ Revisar visibilidad"></textarea>
 
         card.innerHTML = `
           <strong>${index + 1}. Razón:</strong> ${item.reason}<br>
+          <strong>Paso donde se detecta:</strong> ${item.errorStep}<br>
           <strong>Flujo de retrabajo:</strong> ${item.reworkName}<br>
           <strong>Pasos:</strong> ${item.steps.join(" → ")}<br>
           <strong>Regresa a:</strong> ${item.returnStep}
@@ -486,7 +536,44 @@ Revisar visibilidad"></textarea>
       });
     }
 
+    function generateFullOutput() {
+      const fullOutput = document.getElementById("fullOutput");
+
+      let result = "";
+
+      mainSteps.forEach(step => {
+        const stepReworks = reworks.filter(rework => rework.errorStep === step);
+
+        if (stepReworks.length > 0) {
+          result += step + ":\n";
+
+          stepReworks.forEach(rework => {
+            result += "GoToFlowPath[" + rework.reworkName + "/" + rework.steps[0] + "]\n";
+            result += "ReturnStep[" + rework.returnStep + "]\n";
+            result += "Reason[" + rework.reason + "];\n";
+          });
+
+          result += "\n";
+        }
+      });
+
+      fullOutput.textContent = result;
+    }
+
+    function copyFullOutput() {
+      const output = document.getElementById("fullOutput").textContent;
+
+      navigator.clipboard.writeText(output)
+        .then(() => {
+          alert("Output copiado correctamente.");
+        })
+        .catch(() => {
+          alert("No se pudo copiar el output.");
+        });
+    }
+
     renderReasonList();
+    generateFullOutput();
   </script>
 </body>
 </html>
